@@ -65,6 +65,7 @@ var Rectangle = function(id, width, height, positionX, positionY){
   this.xEnd = positionX + width;
   this.yEnd = positionY + height;
   this.color = generateRandomColor(); // Random Generated
+  this.listener = '';
 };
 
 Number.prototype.between = function (max, min) {
@@ -93,6 +94,8 @@ function buildRectangle(rects, parent){
     var rectSpec = new Rectangle('rectangle-'+rects.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
     if (rectSpec.xEnd.between(parent.xEnd, parent.xOrigin) && rectSpec.yEnd.between(parent.yEnd, parent.yOrigin) && checkOverlap(rectSpec, rects)){
         buildHTMLElement(parent.id, rectSpec);
+        console.log(rectSpec);
+        rectSpec.listener = listen(rectSpec.id, 'mouseover');
         rects.push(rectSpec);
         return;
     } else {
@@ -124,12 +127,15 @@ function initApplication(nRectangles, containerWidth, containerHeight, minRectDi
     return [container,rects];
     }
 
+function listen(selector, event){
+    $('#'+selector).on(event, function(){
+        $(this).css("background-color",generateRandomColor());
+    });
+}
+
 document.onreadystatechange = function () {
     if (document.readyState == "complete") {
         var square = initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim);
-        $("#"+square[0].id).on('click', function(){
-            this.css('background-color', generateRandomColor());
-        });
     }
 };
 
