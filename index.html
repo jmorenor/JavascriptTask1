@@ -56,16 +56,34 @@ Further notes:
 
 /* Please write your JavaScript code here */
 
-var Rectangle = function(name, width, height, positionX, positionY){
-  this.name = name;
+var Rectangle = function(id, width, height, positionX, positionY){
+  this.id = id;
   this.width = width;
   this.height = height;
   this.xOrigin = positionX;
   this.yOrigin = positionY;
   this.xEnd = positionX + width;
   this.yEnd = positionY + height;
-  this.color = 'blue'; // Random Generated
+  this.color = generateRandomColor(); // Random Generated
 };
+
+function buildHTMLElement(parent, element){
+    var append = document.createElement('div');
+    append.id = element.id;
+    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.xOrigin+'px; left: '+element.yOrigin+'px; background-color: '+element.color+';');
+    document.getElementById(parent).appendChild(append);
+}
+
+function generateRandomColor() {
+    var color = ("000000" + generateRandomNumber(0xFFFFFF).toString(16)).substr(-6); //Assure 6 hex characters
+    return '#' + color;
+}
+
+function generateRandomNumber(maxNum, minNum){
+    minNum = minNum || 0;
+    
+    return Math.floor(Math.random()*(maxNum + 1 - minNum)) + minNum;
+}
 
 function initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim){
  var body, container;
@@ -73,13 +91,19 @@ function initApplication(nRectangles, containerWidth, containerHeight, minRectDi
  body.id = 'body';
  container = new Rectangle('container', containerWidth, containerHeight, 0, 0);
  buildHTMLElement('body',container);
+ for (var i = 0; i < nRectangles; i++) {
+    buildRectangle(i, container.id);
+ }
 }
 
-function buildHTMLElement(parent, element){
-    var append = document.createElement('div');
-    append.id = element.name;
-    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.xOrigin+'; left: '+element.yOrigin+'; background-color: '+element.color+';');
-    document.getElementById(parent).appendChild(append);
+function buildRectangle(i, parent){
+    var rectSpec = new Rectangle('rectangle-'+i, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
+    if (rectSpec.xEnd <= containerWidth && rectSpec.yEnd <= containerHeight){
+        buildHTMLElement(parent, rectSpec);
+    } else {
+         console.log("Out of container!");
+         buildRectangle(i, parent);
+    }
 }
 
 document.onreadystatechange = function () {
@@ -100,9 +124,9 @@ document.onreadystatechange = function () {
 --></body>
 </html>
 
-<!--function appendRows(data) {-->
-<!--    var append = document.createElement('div');-->
-<!--    append.innerHTML = buildHTML(data);-->
-
-<!--    document.getElementById('div').appendChild(append);-->
-<!--}-->
+<!--if (l1.x > r2.x || l2.x > r1.x)-->
+<!--        return false;-->
+ 
+<!--    // If one rectangle is above other-->
+<!--    if (l1.y < r2.y || l2.y < r1.y)-->
+<!--        return false;-->
