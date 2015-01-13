@@ -6,8 +6,8 @@
 
 
 var	nRectangles = 3,
-    containerWidth = 600,
-    containerHeight = 600,
+    containerWidth = 350,
+    containerHeight = 350,
     minRectDim = 50,
     maxRectDim = 100;
 
@@ -82,29 +82,33 @@ function generateRandomColor() {
 function generateRandomNumber(maxNum, minNum){
     minNum = minNum || 0;
     
-    return Math.floor(Math.random()*(maxNum + 1 - minNum)) + minNum;
+    return Math.floor(Math.random()*(maxNum - minNum)) + minNum;
 }
 
-function initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim){
- var body, container;
- body = document.body;
- body.id = 'body';
- container = new Rectangle('container', containerWidth, containerHeight, 0, 0);
- buildHTMLElement('body',container);
- for (var i = 0; i < nRectangles; i++) {
-    buildRectangle(i, container.id);
- }
-}
-
-function buildRectangle(i, parent){
-    var rectSpec = new Rectangle('rectangle-'+i, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
-    if (rectSpec.xEnd <= containerWidth && rectSpec.yEnd <= containerHeight){
+function buildRectangle(rects, parent){
+    var rectSpec = new Rectangle('rectangle-'+rects.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
+    checkOverlap(rectSpec, rects);
+    if ((rectSpec.xEnd <= containerWidth) || (rectSpec.yEnd <= containerHeight)){
         buildHTMLElement(parent, rectSpec);
+        return rectSpec;
     } else {
-         console.log("Out of container!");
-         buildRectangle(i, parent);
+        buildRectangle(rects, parent);
     }
 }
+
+function checkOverlap(rectSpec, rects){
+    var rLength = rects.length;
+    if (rects.length > 0) {
+        for (var i = 0; i < rLength; i++) {
+            if (!(rectSpec.yEnd < rects[i].yOrigin || rectSpec.yOrigin > rects[i].yEnd || rectSpec.xEnd < rects[i].xOrigin || rectSpec.xOrigin > rects[i].xEnd)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 
 document.onreadystatechange = function () {
     if (document.readyState == "complete") {
@@ -123,10 +127,3 @@ document.onreadystatechange = function () {
     
 --></body>
 </html>
-
-<!--if (l1.x > r2.x || l2.x > r1.x)-->
-<!--        return false;-->
- 
-<!--    // If one rectangle is above other-->
-<!--    if (l1.y < r2.y || l2.y < r1.y)-->
-<!--        return false;-->
