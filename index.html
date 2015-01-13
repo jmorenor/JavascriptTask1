@@ -91,13 +91,11 @@ function generateRandomNumber(maxNum, minNum){
 
 function buildRectangle(rects, parent){
     var rectSpec = new Rectangle('rectangle-'+rects.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
-    console.log(rectSpec);
     if (rectSpec.xEnd.between(parent.xEnd, parent.xOrigin) && rectSpec.yEnd.between(parent.yEnd, parent.yOrigin) && checkOverlap(rectSpec, rects)){
         buildHTMLElement(parent.id, rectSpec);
         rects.push(rectSpec);
         return;
     } else {
-        console.log("Overlap rectangle. Building another one");
         return buildRectangle(rects, parent);
     }
 }
@@ -123,7 +121,6 @@ function initApplication(nRectangles, containerWidth, containerHeight, minRectDi
     for (var i = 0; i < nRectangles; i++) {
         buildRectangle(rects, container);
         }
-    console.log(rects);
     }
 
 document.onreadystatechange = function () {
