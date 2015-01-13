@@ -121,17 +121,20 @@ function initApplication(nRectangles, containerWidth, containerHeight, minRectDi
     for (var i = 0; i < nRectangles; i++) {
         buildRectangle(rects, container);
         }
+    return [container,rects];
     }
 
 document.onreadystatechange = function () {
     if (document.readyState == "complete") {
-        initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim);
+        var square = initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim);
+        $("#"+square[0].id).on('click', function(){
+            this.css('background-color', generateRandomColor());
+        });
     }
 };
 
 </script>
 <!-- If using a framework, please insert <script src> here -->
-<!--<script src="//code.jquery.com/jquery-2.1.3.min.js"></script>-->
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 </head>
 <body><!-- 
