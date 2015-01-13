@@ -56,15 +56,42 @@ Further notes:
 
 /* Please write your JavaScript code here */
 
+var Rectangle = function(name, width, height, positionX, positionY){
+  this.name = name;
+  this.width = width;
+  this.height = height;
+  this.xOrigin = positionX;
+  this.yOrigin = positionY;
+  this.xEnd = positionX + width;
+  this.yEnd = positionY + height;
+  this.color = 'blue'; // Random Generated
+};
+
+function initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim){
+ var body, container;
+ body = document.body;
+ body.id = 'body';
+ container = new Rectangle('container', containerWidth, containerHeight, 0, 0);
+ buildHTMLElement('body',container);
+}
+
+function buildHTMLElement(parent, element){
+    var append = document.createElement('div');
+    append.id = element.name;
+    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.xOrigin+'; left: '+element.yOrigin+'; background-color: '+element.color+';');
+    document.getElementById(parent).appendChild(append);
+}
+
 document.onreadystatechange = function () {
     if (document.readyState == "complete") {
-        console.log("ready!");
+        initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim);
     }
 };
 
 </script>
 <!-- If using a framework, please insert <script src> here -->
-<script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+<!--<script src="//code.jquery.com/jquery-2.1.3.min.js"></script>-->
+<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 </head>
 <body><!-- 
 
@@ -72,3 +99,10 @@ document.onreadystatechange = function () {
     
 --></body>
 </html>
+
+<!--function appendRows(data) {-->
+<!--    var append = document.createElement('div');-->
+<!--    append.innerHTML = buildHTML(data);-->
+
+<!--    document.getElementById('div').appendChild(append);-->
+<!--}-->
