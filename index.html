@@ -65,7 +65,8 @@ var Rectangle = function(id, width, height, positionX, positionY){
   this.xEnd = positionX + width;
   this.yEnd = positionY + height;
   this.color = generateRandomColor(); // Random Generated
-  this.listener = '';
+  this.camouflage = '';
+  this.mouseOverMe = '';
 };
 
 Number.prototype.between = function (max, min) {
@@ -75,7 +76,6 @@ Number.prototype.between = function (max, min) {
 function buildHTMLElement(parentId, element){
     var append = document.createElement('div');
     append.id = element.id;
-    
     append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.yOrigin+'px; left: '+element.xOrigin+'px; background-color: '+element.color+';');
     document.getElementById(parentId).appendChild(append);
 }
@@ -94,8 +94,7 @@ function buildRectangle(rects, parent){
     var rectSpec = new Rectangle('rectangle-'+rects.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
     if (rectSpec.xEnd.between(parent.xEnd, parent.xOrigin) && rectSpec.yEnd.between(parent.yEnd, parent.yOrigin) && checkOverlap(rectSpec, rects)){
         buildHTMLElement(parent.id, rectSpec);
-        console.log(rectSpec);
-        rectSpec.listener = listen(rectSpec.id, 'mouseover');
+        rectSpec.camouflage = listen(rectSpec.id);
         rects.push(rectSpec);
         return;
     } else {
@@ -104,9 +103,9 @@ function buildRectangle(rects, parent){
 }
 
 function checkOverlap(rectSpec, rects){
-    var rLength = rects.length;
-    if (rects.length >= 1) {
-        for (var i = 0; i < rLength; i++) {
+    var i, rLength = rects.length;
+    if (rLength >= 1) {
+        for (i = 0; i < rLength; i++) {
             if(!(rectSpec.yEnd < rects[i].yOrigin || rectSpec.yOrigin > rects[i].yEnd || rectSpec.xEnd < rects[i].xOrigin || rectSpec.xOrigin > rects[i].xEnd)){
                 return false;
             }
@@ -127,15 +126,38 @@ function initApplication(nRectangles, containerWidth, containerHeight, minRectDi
     return [container,rects];
     }
 
-function listen(selector, event){
-    $('#'+selector).on(event, function(){
+function listen(selector){
+    var timeout, element, currentX = 0, currentY = 0;
+    $('#'+selector).on('mouseover', function(e){
+        element = $(this);
         $(this).css("background-color",generateRandomColor());
+        $(this).mousemove(function(event) {
+            currentX = event.pageX;
+            currentY = event.pageY;
+        });
+        timeout = window.setTimeout(function(){
+            var positionX, positionY;
+            positionX = currentX;
+            positionY = currentY;
+            moveOut(positionX, positionY, element);
+        },3000);
+    }).mouseleave(function(){
+        window.clearTimeout(timeout);
     });
+}
+
+function moveOut(positionX, positionY, element){
+    console.log(element);
+}
+
+function mouseMoves(e){
+    
 }
 
 document.onreadystatechange = function () {
     if (document.readyState == "complete") {
-        var square = initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim);
+        //var square = 
+        initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim);
     }
 };
 
