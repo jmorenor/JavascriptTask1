@@ -67,11 +67,16 @@ var Rectangle = function(id, width, height, positionX, positionY){
   this.color = generateRandomColor(); // Random Generated
 };
 
-function buildHTMLElement(parent, element){
+Number.prototype.between = function (max, min) {
+    return this > min && this < max;
+};
+
+function buildHTMLElement(parentId, element){
     var append = document.createElement('div');
     append.id = element.id;
-    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.xOrigin+'px; left: '+element.yOrigin+'px; background-color: '+element.color+';');
-    document.getElementById(parent).appendChild(append);
+    
+    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.yOrigin+'px; left: '+element.xOrigin+'px; background-color: '+element.color+';');
+    document.getElementById(parentId).appendChild(append);
 }
 
 function generateRandomColor() {
@@ -81,26 +86,27 @@ function generateRandomColor() {
 
 function generateRandomNumber(maxNum, minNum){
     minNum = minNum || 0;
-    
     return Math.floor(Math.random()*(maxNum - minNum)) + minNum;
 }
 
 function buildRectangle(rects, parent){
     var rectSpec = new Rectangle('rectangle-'+rects.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
-    checkOverlap(rectSpec, rects);
-    if ((rectSpec.xEnd <= containerWidth) || (rectSpec.yEnd <= containerHeight)){
-        buildHTMLElement(parent, rectSpec);
-        return rectSpec;
+    console.log(rectSpec);
+    if (rectSpec.xEnd.between(parent.xEnd, parent.xOrigin) && rectSpec.yEnd.between(parent.yEnd, parent.yOrigin) && checkOverlap(rectSpec, rects)){
+        buildHTMLElement(parent.id, rectSpec);
+        rects.push(rectSpec);
+        return;
     } else {
-        buildRectangle(rects, parent);
+        console.log("Overlap rectangle. Building another one");
+        return buildRectangle(rects, parent);
     }
 }
 
 function checkOverlap(rectSpec, rects){
     var rLength = rects.length;
-    if (rects.length > 0) {
+    if (rects.length >= 1) {
         for (var i = 0; i < rLength; i++) {
-            if (!(rectSpec.yEnd < rects[i].yOrigin || rectSpec.yOrigin > rects[i].yEnd || rectSpec.xEnd < rects[i].xOrigin || rectSpec.xOrigin > rects[i].xEnd)) {
+            if(!(rectSpec.yEnd < rects[i].yOrigin || rectSpec.yOrigin > rects[i].yEnd || rectSpec.xEnd < rects[i].xOrigin || rectSpec.xOrigin > rects[i].xEnd)){
                 return false;
             }
         }
@@ -108,7 +114,17 @@ function checkOverlap(rectSpec, rects){
     return true;
 }
 
-
+function initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim){
+    var body, container, rects = [];
+    body = document.body;
+    body.id = 'body';
+    container = new Rectangle('container', containerWidth, containerHeight, 0, 0);
+    buildHTMLElement(body.id,container);
+    for (var i = 0; i < nRectangles; i++) {
+        buildRectangle(rects, container);
+        }
+    console.log(rects);
+    }
 
 document.onreadystatechange = function () {
     if (document.readyState == "complete") {
