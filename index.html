@@ -69,16 +69,36 @@ var Rectangle = function() {
 };
 
 Rectangle.prototype.camouflage = function() {
-    var element = document.getElementById(this.id), timeout;
+    var element, self = this, timeout, mouseX = 0, mouseY = 0;
+    element = document.getElementById(self.id);
     element.addEventListener('mouseover', function(){
         element.style.backgroundColor = generateRandomColor();
     });
     element.addEventListener('mouseenter', function(){
-        timeout = window.setTimeout(function(){ console.log("Hello"); }, 3000);
+        timeout = window.setTimeout(function(){
+            self.transform(mouseX, mouseY);
+        }, 3000);
     });
     element.addEventListener('mouseleave', function() {
        window.clearTimeout(timeout);
     });
+    element.addEventListener('mousemove', function(event){
+        mouseX = event.pageX;
+        mouseY = event.pageY;
+    });
+};
+
+Rectangle.prototype.transform = function(mouseX, mouseY) {
+    var self = this;
+    self.originX = generateRandomNumber(containerWidth);
+    self.originY = generateRandomNumber(containerHeight);
+    if (inContainer(self.originX + self.width, self.originY + self.height)){
+        document.getElementById(self.id).style.left = self.originX+"px";
+        document.getElementById(self.id).style.top = self.originY+"px";
+    } else {
+        console.log("Out of container");
+        self.transform(mouseX, mouseY);
+    }
 };
 
 function buildHTMLElement(parentId, element){
@@ -126,23 +146,6 @@ function checkOverlap(rectSpec, rectSet){
         }
     }
     return true;
-}
-
-function camouflage(selector){
-    var timeout, currentX = 0, currentY = 0;
-    $('#'+selector).on('mouseover', function(e){
-        $(this).css("background-color",generateRandomColor());
-        $(this).mousemove(function(event) {
-            currentX = event.pageX;
-            currentY = event.pageY;
-        });
-        timeout = window.setTimeout(function(){
-            var positionMouse = new Rectangle('mouse', 0, 0, currentX, currentY);
-            moveOut(positionMouse, selector);
-        },3000);
-    }).mouseleave(function(){
-        window.clearTimeout(timeout);
-    });
 }
 
 function moveOut(positionMouse, selector){
