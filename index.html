@@ -6,10 +6,10 @@
 
 
 var	nRectangles = 2,
-    containerWidth = 900,
-    containerHeight = 900,
-    minRectDim = 400,
-    maxRectDim = 400;
+    containerWidth = 800,
+    containerHeight = 800,
+    minRectDim = 200,
+    maxRectDim = 200;
 
 /*
 Specifications:
@@ -92,14 +92,14 @@ Rectangle.prototype.transform = function(mouseX, mouseY) {
     var self = this;
     self.originX = generateRandomNumber(containerWidth);
     self.originY = generateRandomNumber(containerHeight);
-    if (inContainer(self)){
+    if (inContainer(self) && !pointInRectangle(mouseX, mouseY, self)){
         var array = rectCollection;
-        var index = array.indexOf(self.id);
+        var index = self.id.slice(-1);
+        array = array.splice(index,1);
         console.log(index);
         document.getElementById(self.id).style.left = self.originX+"px";
         document.getElementById(self.id).style.top = self.originY+"px";
     } else {
-        console.log("Out of container");
         self.transform(mouseX, mouseY);
     }
 };
@@ -118,11 +118,6 @@ function generateRandomColor() {
 
 function rangeIntersect(min0, max0, min1, max1) {
 	return Math.max(min0, max0) >= Math.min(min1, max1) && Math.min(min0, max0) <= Math.max(min1, max1);
-}
-
-function overlaps(rectSpec, rectSet) {
-    rectSet = rectSet || {originX: 0, originY: 0, width: containerWidth, height: containerWidth};
-	return rangeIntersect(rectSpec.originX, rectSpec.originX + rectSpec.width, rectSet.originX, rectSet.originX + rectSet.width) && rangeIntersect(rectSpec.originY, rectSpec.originY + rectSpec.height, rectSet.originY, rectSet.originY + rectSet.height);
 }
 
 function generateRandomNumber(maxNum, minNum){
@@ -145,12 +140,16 @@ function inContainer(element){
     return ((element.originX > 0 && (element.originX + element.width) < containerWidth) && (element.originY > 0 && (element.originY + element.height) < containerHeight));
 }
 
+function rectIntersect(rectSpec, rectSet) {
+	return rangeIntersect(rectSpec.originX, rectSpec.originX + rectSpec.width, rectSet.originX, rectSet.originX + rectSet.width) && rangeIntersect(rectSpec.originY, rectSpec.originY + rectSpec.height, rectSet.originY, rectSet.originY + rectSet.height);
+}
+
 function checkOverlap(rectSpec, rectSet){
     rectSet = rectSet || rectCollection;
     var i, rLength = rectSet.length;
     if (rLength >= 1) {
         for (i = 0; i < rLength; i++) {
-            if (overlaps(rectSpec, rectSet[i])){
+            if (rectIntersect(rectSpec, rectSet[i])){
                 return false;
             }
         }
@@ -158,8 +157,16 @@ function checkOverlap(rectSpec, rectSet){
     return true;
 }
 
+function pointInRectangle (x, y, rectangle) {
+		return numberInRange(x, rectangle.originX, rectangle.originX + rectangle.width) && numberInRange(y, rectangle.originY, rectangle.originY + rectangle.height);
+}
+
+function numberInRange(value, min, max) {
+	return value >= Math.min(min, max) && value <= Math.max(min, max);
+}
+
 function initApplication(){
-    var body, container, rectSpec, quadTree;
+    var body, container, rectSpec;
     body = document.body;
     body.id = 'body';
     container = new Rectangle();
@@ -170,7 +177,6 @@ function initApplication(){
         rectSpec.camouflage();
         rectCollection.push(rectSpec);
         }
-    console.log(quadTree);
     }
 
 function myApp(){
