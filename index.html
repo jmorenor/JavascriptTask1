@@ -5,11 +5,11 @@
 <script type="text/javascript">
 
 
-var	nRectangles = 3,
-    containerWidth = 350,
-    containerHeight = 350,
-    minRectDim = 50,
-    maxRectDim = 100;
+var	nRectangles = 2,
+    containerWidth = 900,
+    containerHeight = 900,
+    minRectDim = 400,
+    maxRectDim = 400;
 
 /*
 Specifications:
@@ -92,7 +92,10 @@ Rectangle.prototype.transform = function(mouseX, mouseY) {
     var self = this;
     self.originX = generateRandomNumber(containerWidth);
     self.originY = generateRandomNumber(containerHeight);
-    if (inContainer(self.originX + self.width, self.originY + self.height)){
+    if (inContainer(self)){
+        var array = rectCollection;
+        var index = array.indexOf(self.id);
+        console.log(index);
         document.getElementById(self.id).style.left = self.originX+"px";
         document.getElementById(self.id).style.top = self.originY+"px";
     } else {
@@ -113,6 +116,15 @@ function generateRandomColor() {
     return '#' + color;
 }
 
+function rangeIntersect(min0, max0, min1, max1) {
+	return Math.max(min0, max0) >= Math.min(min1, max1) && Math.min(min0, max0) <= Math.max(min1, max1);
+}
+
+function overlaps(rectSpec, rectSet) {
+    rectSet = rectSet || {originX: 0, originY: 0, width: containerWidth, height: containerWidth};
+	return rangeIntersect(rectSpec.originX, rectSpec.originX + rectSpec.width, rectSet.originX, rectSet.originX + rectSet.width) && rangeIntersect(rectSpec.originY, rectSpec.originY + rectSpec.height, rectSet.originY, rectSet.originY + rectSet.height);
+}
+
 function generateRandomNumber(maxNum, minNum){
     minNum = minNum || 0;
     return Math.floor(Math.random()*(maxNum - minNum)) + minNum;
@@ -121,7 +133,7 @@ function generateRandomNumber(maxNum, minNum){
 function buildRectangle(rectCollection, parent){
     var rectSpec = new Rectangle();
     rectSpec.init('rectangle-'+rectCollection.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
-    if (inContainer((rectSpec.originX + rectSpec.width), (rectSpec.originY + rectSpec.height)) && checkOverlap(rectSpec, rectCollection)){
+    if (inContainer(rectSpec) && checkOverlap(rectSpec, rectCollection)){
         buildHTMLElement(parent.id, rectSpec);
         return rectSpec;
     } else {
@@ -129,9 +141,8 @@ function buildRectangle(rectCollection, parent){
     }
 }
 
-function inContainer(positionX, positionY){
-    
-    return ((positionX > 0 && positionX < containerWidth) && (positionY > 0 && positionY < containerHeight));
+function inContainer(element){
+    return ((element.originX > 0 && (element.originX + element.width) < containerWidth) && (element.originY > 0 && (element.originY + element.height) < containerHeight));
 }
 
 function checkOverlap(rectSpec, rectSet){
@@ -139,8 +150,7 @@ function checkOverlap(rectSpec, rectSet){
     var i, rLength = rectSet.length;
     if (rLength >= 1) {
         for (i = 0; i < rLength; i++) {
-            // if(!((rectSpec.originY + rectSpec.height) < rectSet[i].originY || rectSpec.originY > (rectSet[i].originY + rectSet[i].height) || (rectSpec.originX + rectSpec.height) < rectSet[i].originX || rectSpec.originX > (rectSet[i].originX + rectSet[i].width)))
-            if (rectSpec.originX < rectSet[i].originX + rectSet[i].width  && rectSpec.originX + rectSpec.width  > rectSet[i].originX && rectSpec.originY < rectSet[i].originY + rectSet[i].height && rectSpec.originY + rectSpec.height > rectSet[i].originY){
+            if (overlaps(rectSpec, rectSet[i])){
                 return false;
             }
         }
@@ -148,37 +158,8 @@ function checkOverlap(rectSpec, rectSet){
     return true;
 }
 
-function moveOut(positionMouse, selector){
-    var rectangle, rectSet, newOriginX, newOriginY;
-    selector = selector.slice(-1);
-    rectangle = rectCollection[selector];
-    console.log(rectangle);
-    rectSet = rectCollection;
-    rectSet.splice(selector,1);
-    newOriginX = generateRandomNumber(containerWidth);
-    newOriginY = generateRandomNumber(containerWidth);
-    if (inContainer(newOriginX + rectangle.width, newOriginY + rectangle.height)){
-        rectangle.originX = newOriginX;
-        rectangle.originY = newOriginY;
-        rectangle.endX = newOriginX + rectangle.width;
-        rectangle.endY = newOriginY + rectangle.height;
-        if (checkOverlap(rectangle, rectSet) && checkOverlap(positionMouse, rectangle)){
-            var styles = {
-                top: rectangle.originY,
-                left: rectangle.orginX
-            };
-            $("#"+rectangle.id).css(styles);
-        } else {
-            console.log("To be checked! :-P");
-        }
-        
-    } else {
-        return moveOut(positionMouse, selector);
-    }
-}
-
 function initApplication(){
-    var body, container, rectSpec;
+    var body, container, rectSpec, quadTree;
     body = document.body;
     body.id = 'body';
     container = new Rectangle();
@@ -189,15 +170,10 @@ function initApplication(){
         rectSpec.camouflage();
         rectCollection.push(rectSpec);
         }
-    console.log(rectCollection);
+    console.log(quadTree);
     }
-// document.onreadystatechange = function () {
-//     if (document.readyState == "interactive") {
-//         initApplication();
-//     }
-// };
 
-function init(){
+function myApp(){
     initApplication();
 }
 
@@ -205,7 +181,7 @@ function init(){
 <!-- If using a framework, please insert <script src> here -->
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 </head>
-<body onload="init()"><!-- 
+<body onload="myApp()"><!-- 
 
     No HTML here! Everything must be written in JavaScript.
     
