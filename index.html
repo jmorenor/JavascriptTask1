@@ -55,28 +55,36 @@ Further notes:
 */
 
 /* Please write your JavaScript code here */
+var rectCollection = [];
 
-var Rectangle = function(id, width, height, positionX, positionY){
-  this.id = id;
-  this.width = width;
-  this.height = height;
-  this.xOrigin = positionX;
-  this.yOrigin = positionY;
-  this.xEnd = positionX + width;
-  this.yEnd = positionY + height;
-  this.color = generateRandomColor(); // Random Generated
-  this.camouflage = '';
-  this.mouseOverMe = '';
+var Rectangle = function() {
+    this.init = function(id, width, height, positionX, positionY) {
+        this.id = id;
+        this.width = width;
+        this.height = height;
+        this.originX = positionX;
+        this.originY = positionY;
+        this.color = generateRandomColor();
+    };
 };
 
-Number.prototype.between = function (max, min) {
-    return this > min && this < max;
+Rectangle.prototype.camouflage = function() {
+    var element = document.getElementById(this.id), timeout;
+    element.addEventListener('mouseover', function(){
+        element.style.backgroundColor = generateRandomColor();
+    });
+    element.addEventListener('mouseenter', function(){
+        timeout = window.setTimeout(function(){ console.log("Hello"); }, 3000);
+    });
+    element.addEventListener('mouseleave', function() {
+       window.clearTimeout(timeout);
+    });
 };
 
 function buildHTMLElement(parentId, element){
     var append = document.createElement('div');
     append.id = element.id;
-    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.yOrigin+'px; left: '+element.xOrigin+'px; background-color: '+element.color+';');
+    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.originY+'px; left: '+element.originX+'px; background-color: '+element.color+';');
     document.getElementById(parentId).appendChild(append);
 }
 
@@ -90,23 +98,29 @@ function generateRandomNumber(maxNum, minNum){
     return Math.floor(Math.random()*(maxNum - minNum)) + minNum;
 }
 
-function buildRectangle(rects, parent){
-    var rectSpec = new Rectangle('rectangle-'+rects.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
-    if (rectSpec.xEnd.between(parent.xEnd, parent.xOrigin) && rectSpec.yEnd.between(parent.yEnd, parent.yOrigin) && checkOverlap(rectSpec, rects)){
+function buildRectangle(rectCollection, parent){
+    var rectSpec = new Rectangle();
+    rectSpec.init('rectangle-'+rectCollection.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
+    if (inContainer((rectSpec.originX + rectSpec.width), (rectSpec.originY + rectSpec.height)) && checkOverlap(rectSpec, rectCollection)){
         buildHTMLElement(parent.id, rectSpec);
-        rectSpec.camouflage = listen(rectSpec.id);
-        rects.push(rectSpec);
-        return;
+        return rectSpec;
     } else {
-        return buildRectangle(rects, parent);
+        return buildRectangle(rectCollection, parent);
     }
 }
 
-function checkOverlap(rectSpec, rects){
-    var i, rLength = rects.length;
+function inContainer(positionX, positionY){
+    
+    return ((positionX > 0 && positionX < containerWidth) && (positionY > 0 && positionY < containerHeight));
+}
+
+function checkOverlap(rectSpec, rectSet){
+    rectSet = rectSet || rectCollection;
+    var i, rLength = rectSet.length;
     if (rLength >= 1) {
         for (i = 0; i < rLength; i++) {
-            if(!(rectSpec.yEnd < rects[i].yOrigin || rectSpec.yOrigin > rects[i].yEnd || rectSpec.xEnd < rects[i].xOrigin || rectSpec.xOrigin > rects[i].xEnd)){
+            // if(!((rectSpec.originY + rectSpec.height) < rectSet[i].originY || rectSpec.originY > (rectSet[i].originY + rectSet[i].height) || (rectSpec.originX + rectSpec.height) < rectSet[i].originX || rectSpec.originX > (rectSet[i].originX + rectSet[i].width)))
+            if (rectSpec.originX < rectSet[i].originX + rectSet[i].width  && rectSpec.originX + rectSpec.width  > rectSet[i].originX && rectSpec.originY < rectSet[i].originY + rectSet[i].height && rectSpec.originY + rectSpec.height > rectSet[i].originY){
                 return false;
             }
         }
@@ -114,60 +128,85 @@ function checkOverlap(rectSpec, rects){
     return true;
 }
 
-function initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim){
-    var body, container, rects = [];
-    body = document.body;
-    body.id = 'body';
-    container = new Rectangle('container', containerWidth, containerHeight, 0, 0);
-    buildHTMLElement(body.id,container);
-    for (var i = 0; i < nRectangles; i++) {
-        buildRectangle(rects, container);
-        }
-    return [container,rects];
-    }
-
-function listen(selector){
-    var timeout, element, currentX = 0, currentY = 0;
+function camouflage(selector){
+    var timeout, currentX = 0, currentY = 0;
     $('#'+selector).on('mouseover', function(e){
-        element = $(this);
         $(this).css("background-color",generateRandomColor());
         $(this).mousemove(function(event) {
             currentX = event.pageX;
             currentY = event.pageY;
         });
         timeout = window.setTimeout(function(){
-            var positionX, positionY;
-            positionX = currentX;
-            positionY = currentY;
-            moveOut(positionX, positionY, element);
+            var positionMouse = new Rectangle('mouse', 0, 0, currentX, currentY);
+            moveOut(positionMouse, selector);
         },3000);
     }).mouseleave(function(){
         window.clearTimeout(timeout);
     });
 }
 
-function moveOut(positionX, positionY, element){
-    console.log(element);
-}
-
-function mouseMoves(e){
-    
-}
-
-document.onreadystatechange = function () {
-    if (document.readyState == "complete") {
-        //var square = 
-        initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim);
+function moveOut(positionMouse, selector){
+    var rectangle, rectSet, newOriginX, newOriginY;
+    selector = selector.slice(-1);
+    rectangle = rectCollection[selector];
+    console.log(rectangle);
+    rectSet = rectCollection;
+    rectSet.splice(selector,1);
+    newOriginX = generateRandomNumber(containerWidth);
+    newOriginY = generateRandomNumber(containerWidth);
+    if (inContainer(newOriginX + rectangle.width, newOriginY + rectangle.height)){
+        rectangle.originX = newOriginX;
+        rectangle.originY = newOriginY;
+        rectangle.endX = newOriginX + rectangle.width;
+        rectangle.endY = newOriginY + rectangle.height;
+        if (checkOverlap(rectangle, rectSet) && checkOverlap(positionMouse, rectangle)){
+            var styles = {
+                top: rectangle.originY,
+                left: rectangle.orginX
+            };
+            $("#"+rectangle.id).css(styles);
+        } else {
+            console.log("To be checked! :-P");
+        }
+        
+    } else {
+        return moveOut(positionMouse, selector);
     }
-};
+}
+
+function initApplication(){
+    var body, container, rectSpec;
+    body = document.body;
+    body.id = 'body';
+    container = new Rectangle();
+    container.init('container', containerWidth, containerHeight, 0, 0);
+    buildHTMLElement(body.id,container);
+    for (var i = 0; i < nRectangles; i++) {
+        rectSpec = buildRectangle(rectCollection, container);
+        rectSpec.camouflage();
+        rectCollection.push(rectSpec);
+        }
+    console.log(rectCollection);
+    }
+// document.onreadystatechange = function () {
+//     if (document.readyState == "interactive") {
+//         initApplication();
+//     }
+// };
+
+function init(){
+    initApplication();
+}
 
 </script>
 <!-- If using a framework, please insert <script src> here -->
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 </head>
-<body><!-- 
+<body onload="init()"><!-- 
 
     No HTML here! Everything must be written in JavaScript.
     
 --></body>
 </html>
+
+<!--https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind-->
