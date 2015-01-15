@@ -6,11 +6,10 @@
 
 
 var	nRectangles = 2,
-    containerWidth = 800,
-    containerHeight = 800,
-    minRectDim = 200,
+    containerWidth = 420,
+    containerHeight = 420,
+    minRectDim = 100,
     maxRectDim = 200;
-
 /*
 Specifications:
 
@@ -62,8 +61,8 @@ var Rectangle = function() {
         this.id = id;
         this.width = width;
         this.height = height;
-        this.originX = positionX;
-        this.originY = positionY;
+        this.positionX = positionX || 0;
+        this.positionY = positionY || 0;
         this.color = generateRandomColor();
     };
 };
@@ -90,24 +89,38 @@ Rectangle.prototype.camouflage = function() {
 
 Rectangle.prototype.transform = function(mouseX, mouseY) {
     var self = this;
-    self.originX = generateRandomNumber(containerWidth);
-    self.originY = generateRandomNumber(containerHeight);
+    self.positionX = generateRandomNumber(containerWidth);
+    self.posi = generateRandomNumber(containerHeight);
     if (inContainer(self) && !pointInRectangle(mouseX, mouseY, self)){
         var array = rectCollection;
         var index = self.id.slice(-1);
         array = array.splice(index,1);
         console.log(index);
-        document.getElementById(self.id).style.left = self.originX+"px";
-        document.getElementById(self.id).style.top = self.originY+"px";
+        document.getElementById(self.id).style.left = self.positionX+"px";
+        document.getElementById(self.id).style.top = self.posi+"px";
     } else {
         self.transform(mouseX, mouseY);
     }
 };
 
+Array.prototype.shuffle = function() {
+    var input = this;
+     
+    for (var i = input.length-1; i >=0; i--) {
+     
+        var randomIndex = Math.floor(Math.random()*(i+1)); 
+        var itemAtIndex = input[randomIndex]; 
+         
+        input[randomIndex] = input[i]; 
+        input[i] = itemAtIndex;
+    }
+    return input;
+};
+
 function buildHTMLElement(parentId, element){
     var append = document.createElement('div');
     append.id = element.id;
-    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.originY+'px; left: '+element.originX+'px; background-color: '+element.color+';');
+    append.setAttribute('style', 'width: '+element.width+'px; height: '+element.height+'px; position: absolute; top: '+element.positionY+'px; left: '+element.positionX+'px; background-color: '+element.color+';');
     document.getElementById(parentId).appendChild(append);
 }
 
@@ -122,13 +135,14 @@ function rangeIntersect(min0, max0, min1, max1) {
 
 function generateRandomNumber(maxNum, minNum){
     minNum = minNum || 0;
-    return Math.floor(Math.random()*(maxNum - minNum)) + minNum;
+    return Math.floor(Math.random()*((maxNum+1) - minNum)) + minNum;
 }
 
-function buildRectangle(rectCollection, parent){
+function buildRectangle(rectCollection, parent, dimensions){
     var rectSpec = new Rectangle();
-    rectSpec.init('rectangle-'+rectCollection.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(containerWidth), generateRandomNumber(containerHeight));
-    if (inContainer(rectSpec) && checkOverlap(rectSpec, rectCollection)){
+    console.log(dimensions);
+    rectSpec.init('rectangle-'+rectCollection.length, dimensions[0], dimensions[1], dimensions[2], dimensions[3]);
+    if (checkOverlap(rectSpec, rectCollection)){
         buildHTMLElement(parent.id, rectSpec);
         return rectSpec;
     } else {
@@ -137,11 +151,11 @@ function buildRectangle(rectCollection, parent){
 }
 
 function inContainer(element){
-    return ((element.originX > 0 && (element.originX + element.width) < containerWidth) && (element.originY > 0 && (element.originY + element.height) < containerHeight));
+    return ((element.positionX > 0 && (element.positionX + element.width) < containerWidth) && (element.posi > 0 && (element.posi + element.height) < containerHeight));
 }
 
 function rectIntersect(rectSpec, rectSet) {
-	return rangeIntersect(rectSpec.originX, rectSpec.originX + rectSpec.width, rectSet.originX, rectSet.originX + rectSet.width) && rangeIntersect(rectSpec.originY, rectSpec.originY + rectSpec.height, rectSet.originY, rectSet.originY + rectSet.height);
+	return rangeIntersect(rectSpec.positionX, rectSpec.positionX + rectSpec.width, rectSet.positionX, rectSet.positionX + rectSet.width) && rangeIntersect(rectSpec.positionY, rectSpec.positionY + rectSpec.height, rectSet.posi, rectSet.posi + rectSet.height);
 }
 
 function checkOverlap(rectSpec, rectSet){
@@ -158,11 +172,45 @@ function checkOverlap(rectSpec, rectSet){
 }
 
 function pointInRectangle (x, y, rectangle) {
-		return numberInRange(x, rectangle.originX, rectangle.originX + rectangle.width) && numberInRange(y, rectangle.originY, rectangle.originY + rectangle.height);
+		return numberInRange(x, rectangle.positionX, rectangle.positionX + rectangle.width) && numberInRange(y, rectangle.posi, rectangle.posi + rectangle.height);
 }
 
 function numberInRange(value, min, max) {
 	return value >= Math.min(min, max) && value <= Math.max(min, max);
+}
+
+function generatePositionsDimensions(container, maxDimension, minDimension, numElements){
+    var remainInContainer = [container.width,container.height], position = [0,0], width, height, i, currentContainer= [0,0], dimensions = [], size = [[],[],[],[]], dimensis;
+    numElements = numElements || 1;
+    // Generate random sizes
+    for (i = 0; i < numElements; i++) {
+        width = generateRandomNumber(Math.min(remainInContainer[0], maxDimension), minDimension);
+        height = generateRandomNumber(Math.min(remainInContainer[1], maxDimension), minDimension);
+        remainInContainer[0] -= width;
+        remainInContainer[1] -= height;
+        dimensions.push([width, height]);
+        size[0].push(width);
+        size[1].push(height);
+    }
+    // Generate randon positions
+    for (i = 0; i < numElements; i++) {
+        position[0] = generateRandomNumber(remainInContainer[0]);
+        position[1] = generateRandomNumber(remainInContainer[1]);
+        remainInContainer[0] -= position[0];
+        remainInContainer[1] -= position[1];
+        dimensions[i].push(position[0] + currentContainer[0]);
+        dimensions[i].push(position[1] + currentContainer[1]);
+        size[2].push(position[0]);
+        size[3].push(position[1]);
+        currentContainer[0] += position[0] + dimensions[i][0];
+        currentContainer[1] += position[1] + dimensions[i][1];
+    }
+    
+    for(i = 0; i < numElements; i++) {
+        dimensis.push({positionX: , positionX, })
+    }
+    
+    return dimensions;
 }
 
 function initApplication(){
@@ -172,8 +220,9 @@ function initApplication(){
     container = new Rectangle();
     container.init('container', containerWidth, containerHeight, 0, 0);
     buildHTMLElement(body.id,container);
+    var dimensions = generatePositionsDimensions(container, maxRectDim, minRectDim, nRectangles);
     for (var i = 0; i < nRectangles; i++) {
-        rectSpec = buildRectangle(rectCollection, container);
+        rectSpec = buildRectangle(rectCollection, container, dimensions[i]);
         rectSpec.camouflage();
         rectCollection.push(rectSpec);
         }
@@ -181,7 +230,10 @@ function initApplication(){
 
 function myApp(){
     initApplication();
+    // var container1 = {positionX: containerWidth, positionY: containerWidth};
+    // generatePositionsDimensions(container1, maxRectDim, minRectDim, 2);
 }
+
 
 </script>
 <!-- If using a framework, please insert <script src> here -->
