@@ -5,11 +5,11 @@
 <script type="text/javascript">
 
 
-var	nRectangles = 2,
-    containerWidth = 800,
-    containerHeight = 800,
-    minRectDim = 200,
-    maxRectDim = 200;
+var	nRectangles = 3,
+    containerWidth = 420,
+    containerHeight = 420,
+    minRectDim = 140,
+    maxRectDim = 140;
 
 /*
 Specifications:
@@ -66,43 +66,68 @@ var Rectangle = function() {
         this.originY = positionY;
         this.color = generateRandomColor();
     };
-};
-
-Rectangle.prototype.camouflage = function() {
-    var element, self = this, timeout, mouseX = 0, mouseY = 0;
-    element = document.getElementById(self.id);
-    element.addEventListener('mouseover', function(){
-        element.style.backgroundColor = generateRandomColor();
-    });
-    element.addEventListener('mouseenter', function(){
-        timeout = window.setTimeout(function(){
-            self.transform(mouseX, mouseY);
-        }, 3000);
-    });
-    element.addEventListener('mouseleave', function() {
-       window.clearTimeout(timeout);
-    });
-    element.addEventListener('mousemove', function(event){
-        mouseX = event.pageX;
-        mouseY = event.pageY;
-    });
-};
-
-Rectangle.prototype.transform = function(mouseX, mouseY) {
+    this.camouflage = function() {
+        var element, self = this, timeout, mouseX = 0, mouseY = 0;
+        element = document.getElementById(self.id);
+        element.addEventListener('mouseover', function(){
+            element.style.backgroundColor = generateRandomColor();
+        });
+        element.addEventListener('mouseenter', function(){
+            timeout = window.setTimeout(function(){
+                self.transform(mouseX, mouseY);
+            }, 3000);
+        });
+        element.addEventListener('mouseleave', function() {
+           window.clearTimeout(timeout);
+        });
+        element.addEventListener('mousemove', function(event){
+            mouseX = event.pageX;
+            mouseY = event.pageY;
+        });
+    };
+    
+    this.transform = function(mouseX, mouseY) {
     var self = this;
     self.originX = generateRandomNumber(containerWidth);
     self.originY = generateRandomNumber(containerHeight);
     if (inContainer(self) && !pointInRectangle(mouseX, mouseY, self)){
-        var array = rectCollection;
-        var index = self.id.slice(-1);
-        array = array.splice(index,1);
-        console.log(index);
+        self.siblings(rectCollection);
+        console.log(self.siblings);
         document.getElementById(self.id).style.left = self.originX+"px";
         document.getElementById(self.id).style.top = self.originY+"px";
     } else {
         self.transform(mouseX, mouseY);
     }
 };
+};
+
+// Rectangle.prototype.camouflage = function() {
+//     var element, self = this, timeout, mouseX = 0, mouseY = 0;
+//     element = document.getElementById(self.id);
+//     element.addEventListener('mouseover', function(){
+//         element.style.backgroundColor = generateRandomColor();
+//     });
+//     element.addEventListener('mouseenter', function(){
+//         timeout = window.setTimeout(function(){
+//             self.transform(mouseX, mouseY);
+//         }, 3000);
+//     });
+//     element.addEventListener('mouseleave', function() {
+//       window.clearTimeout(timeout);
+//     });
+//     element.addEventListener('mousemove', function(event){
+//         mouseX = event.pageX;
+//         mouseY = event.pageY;
+//     });
+// };
+
+Rectangle.prototype.siblings = function(collection){
+    var siblings = collection.slice();
+    var index = this.id.slice(-1);
+    siblings = siblings.splice(index,1);
+    return siblings;
+};
+
 
 function buildHTMLElement(parentId, element){
     var append = document.createElement('div');
