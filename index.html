@@ -6,22 +6,23 @@
 
 
 var	nRectangles = 2,
-    containerWidth = 420,
-    containerHeight = 420,
-    minRectDim = 100,
-    maxRectDim = 200;
+    containerWidth = 480,
+    containerHeight = 480,
+    minRectDim = 240,
+    maxRectDim = 240;
+    
 /*
 Specifications:
 
     - The above pseudo-constant values may vary. However, it is guaranteed that:
 
-        a) containerWidth >= (nRectangles x maxRectDim)
+        a) parent.width >= (nRectangles x maxRectDim)
             and
         b) containerHeight >= (nRectangles x maxRectDim)
 
         so that the "on load" processing below is always possible.
 
-    - The action takes place in a (containerWidth x containerHeight) container random-color div with top-left border at 0,0 screen (window) coordinates.
+    - The action takes place in a (parent.width x containerHeight) container random-color div with top-left border at 0,0 screen (window) coordinates.
 
     - On load, nRectangles random-sized (each side minRectDim to maxRectDim pixels included) and random-color rectangles are displayed according to the following rules:
     
@@ -54,67 +55,58 @@ Further notes:
 */
 
 /* Please write your JavaScript code here */
-var rectCollection = [];
-
 var Rectangle = function() {
-    this.init = function(id, width, height, positionX, positionY) {
+    this.init = function(id, width, height, positionX, positionY, parent) {
         this.id = id;
         this.width = width;
         this.height = height;
-        this.positionX = positionX || 0;
-        this.positionY = positionY || 0;
+        this.positionX = positionX;
+        this.positionY = positionY;
         this.color = generateRandomColor();
+        this.parent = parent;
+        this.siblings = '';
     };
-};
-
-Rectangle.prototype.camouflage = function() {
-    var element, self = this, timeout, mouseX = 0, mouseY = 0;
-    element = document.getElementById(self.id);
-    element.addEventListener('mouseover', function(){
-        element.style.backgroundColor = generateRandomColor();
-    });
-    element.addEventListener('mouseenter', function(){
-        timeout = window.setTimeout(function(){
-            self.transform(mouseX, mouseY);
-        }, 3000);
-    });
-    element.addEventListener('mouseleave', function() {
-       window.clearTimeout(timeout);
-    });
-    element.addEventListener('mousemove', function(event){
-        mouseX = event.pageX;
-        mouseY = event.pageY;
-    });
-};
-
-Rectangle.prototype.transform = function(mouseX, mouseY) {
-    var self = this;
-    self.positionX = generateRandomNumber(containerWidth);
-    self.posi = generateRandomNumber(containerHeight);
-    if (inContainer(self) && !pointInRectangle(mouseX, mouseY, self)){
-        var array = rectCollection;
-        var index = self.id.slice(-1);
-        array = array.splice(index,1);
-        console.log(index);
-        document.getElementById(self.id).style.left = self.positionX+"px";
-        document.getElementById(self.id).style.top = self.posi+"px";
-    } else {
-        self.transform(mouseX, mouseY);
-    }
-};
-
-Array.prototype.shuffle = function() {
-    var input = this;
-     
-    for (var i = input.length-1; i >=0; i--) {
-     
-        var randomIndex = Math.floor(Math.random()*(i+1)); 
-        var itemAtIndex = input[randomIndex]; 
-         
-        input[randomIndex] = input[i]; 
-        input[i] = itemAtIndex;
-    }
-    return input;
+    this.camouflage = function() {
+        var self = this,
+            element = document.getElementById(self.id),
+            timeout, 
+            mouseX = 0, 
+            mouseY = 0;
+            
+        element.addEventListener('mouseover', function(){
+            element.style.backgroundColor = generateRandomColor();
+        });
+        element.addEventListener('mouseenter', function(){
+            timeout = window.setTimeout(function(){
+                self.transform(mouseX, mouseY);
+            }, 3000);
+        });
+        element.addEventListener('mouseleave', function() {
+           window.clearTimeout(timeout);
+        });
+        element.addEventListener('mousemove', function(event){
+            mouseX = event.pageX;
+            mouseY = event.pageY;
+        });
+    };
+    
+    this.transform = function(mouseX, mouseY) {
+        try {
+            var self = this;
+            self.positionX = generateRandomNumber(self.parent.width);
+            self.positionY = generateRandomNumber(self.parent.height);
+            if (inContainer(self) && !pointInRectangle(mouseX, mouseY, self) && checkOverlap(self, self.siblings)){
+                document.getElementById(self.id).style.left = self.positionX+"px";
+                document.getElementById(self.id).style.top = self.positionY+"px";
+            } else {
+                self.transform(mouseX, mouseY);
+            }
+        } catch(e) {
+            var parent = document.getElementById(self.parent.id);
+            var child = document.getElementById(self.id);
+            parent.removeChild(child);
+        }
+    };
 };
 
 function buildHTMLElement(parentId, element){
@@ -138,24 +130,25 @@ function generateRandomNumber(maxNum, minNum){
     return Math.floor(Math.random()*((maxNum+1) - minNum)) + minNum;
 }
 
-function buildRectangle(rectCollection, parent, dimensions){
+function buildRectangle(rectCollection, parent, maxRectDim, minRectDim){
     var rectSpec = new Rectangle();
-    console.log(dimensions);
-    rectSpec.init('rectangle-'+rectCollection.length, dimensions[0], dimensions[1], dimensions[2], dimensions[3]);
-    if (checkOverlap(rectSpec, rectCollection)){
-        buildHTMLElement(parent.id, rectSpec);
-        return rectSpec;
-    } else {
-        return buildRectangle(rectCollection, parent);
-    }
+    rectSpec.init('rectangle-'+rectCollection.length, generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(maxRectDim, minRectDim), generateRandomNumber(parent.width), generateRandomNumber(parent.height), parent);
+        if (inContainer(rectSpec) && checkOverlap(rectSpec, rectCollection)){
+            buildHTMLElement(parent.id, rectSpec);
+            return rectSpec;
+        } else {
+            rectSpec = {};
+            return buildRectangle(rectCollection, parent, maxRectDim, minRectDim);
+        }
 }
 
-function inContainer(element){
-    return ((element.positionX > 0 && (element.positionX + element.width) < containerWidth) && (element.posi > 0 && (element.posi + element.height) < containerHeight));
+function inContainer(element, container){
+    container = container || element.parent;
+    return ((element.positionX > container.positionX && (element.positionX + element.width) < container.width) && (element.positionY > container.positionY && (element.positionY + element.height) < container.height));
 }
 
 function rectIntersect(rectSpec, rectSet) {
-	return rangeIntersect(rectSpec.positionX, rectSpec.positionX + rectSpec.width, rectSet.positionX, rectSet.positionX + rectSet.width) && rangeIntersect(rectSpec.positionY, rectSpec.positionY + rectSpec.height, rectSet.posi, rectSet.posi + rectSet.height);
+	return rangeIntersect(rectSpec.positionX, rectSpec.positionX + rectSpec.width, rectSet.positionX, rectSet.positionX + rectSet.width) && rangeIntersect(rectSpec.positionY, rectSpec.positionY + rectSpec.height, rectSet.positionY, rectSet.positionY + rectSet.height);
 }
 
 function checkOverlap(rectSpec, rectSet){
@@ -172,72 +165,97 @@ function checkOverlap(rectSpec, rectSet){
 }
 
 function pointInRectangle (x, y, rectangle) {
-		return numberInRange(x, rectangle.positionX, rectangle.positionX + rectangle.width) && numberInRange(y, rectangle.posi, rectangle.posi + rectangle.height);
+		return numberInRange(x, rectangle.positionX, rectangle.positionX + rectangle.width) && numberInRange(y, rectangle.positionY, rectangle.positionY + rectangle.height);
 }
 
 function numberInRange(value, min, max) {
 	return value >= Math.min(min, max) && value <= Math.max(min, max);
 }
 
-function generatePositionsDimensions(container, maxDimension, minDimension, numElements){
-    var remainInContainer = [container.width,container.height], position = [0,0], width, height, i, currentContainer= [0,0], dimensions = [], size = [[],[],[],[]], dimensis;
-    numElements = numElements || 1;
-    // Generate random sizes
-    for (i = 0; i < numElements; i++) {
-        width = generateRandomNumber(Math.min(remainInContainer[0], maxDimension), minDimension);
-        height = generateRandomNumber(Math.min(remainInContainer[1], maxDimension), minDimension);
-        remainInContainer[0] -= width;
-        remainInContainer[1] -= height;
-        dimensions.push([width, height]);
-        size[0].push(width);
-        size[1].push(height);
+function knowingMySiblings(rectCollection){
+    var rLength = rectCollection.length;
+    if (rLength > 1) {
+        for (var i=0; i < rLength; i++) {
+            var self = rectCollection[i],
+                siblings = rectCollection.slice(),
+                index = self.id.slice(-1);
+            
+            siblings.splice(index,1);
+            self.siblings = siblings;
+        }
     }
-    // Generate randon positions
-    for (i = 0; i < numElements; i++) {
-        position[0] = generateRandomNumber(remainInContainer[0]);
-        position[1] = generateRandomNumber(remainInContainer[1]);
-        remainInContainer[0] -= position[0];
-        remainInContainer[1] -= position[1];
-        dimensions[i].push(position[0] + currentContainer[0]);
-        dimensions[i].push(position[1] + currentContainer[1]);
-        size[2].push(position[0]);
-        size[3].push(position[1]);
-        currentContainer[0] += position[0] + dimensions[i][0];
-        currentContainer[1] += position[1] + dimensions[i][1];
-    }
-    
-    for(i = 0; i < numElements; i++) {
-        dimensis.push({positionX: , positionX, })
-    }
-    
-    return dimensions;
 }
 
-function initApplication(){
-    var body, container, rectSpec;
-    body = document.body;
+function initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim){
+    var body = document.body,
+        container = new Rectangle(),
+        rectCollection = [];
     body.id = 'body';
     container = new Rectangle();
     container.init('container', containerWidth, containerHeight, 0, 0);
     buildHTMLElement(body.id,container);
-    var dimensions = generatePositionsDimensions(container, maxRectDim, minRectDim, nRectangles);
     for (var i = 0; i < nRectangles; i++) {
-        rectSpec = buildRectangle(rectCollection, container, dimensions[i]);
-        rectSpec.camouflage();
-        rectCollection.push(rectSpec);
+        var rectSpec;
+        try {
+            rectSpec = buildRectangle(rectCollection, container, maxRectDim, minRectDim);
+            rectSpec.camouflage();
+            rectCollection.push(rectSpec);
+        } catch(RangeError) {
+            while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+            buildHTMLElement(body.id,container);
+            rectCollection = [];
+            weDontFit(rectCollection, container, maxRectDim, minRectDim, nRectangles);
+            break;
         }
     }
+    knowingMySiblings(rectCollection);
+}
+
+function weDontFit(rectCollection, parent, maxRectDim, minRectDim, nRectangles){
+    var currentToZero = [parent.width, parent.height],
+        currentToEdges = [0,0],
+        dimensions = [], // decide random move X or Y
+        rectSpec = new Rectangle();
+        
+    for(var i=0; i < nRectangles; i++){
+        var dimX = generateRandomNumber(Math.min(maxRectDim, currentToZero[0]),minRectDim);
+        var dimY = generateRandomNumber(Math.min(maxRectDim, currentToZero[1]),minRectDim);
+        dimensions.push([dimX, dimY]);
+        currentToZero[0] -= dimX;
+        currentToZero[1] -= dimY;
+    }
+    
+    for(var i=0; i < nRectangles; i++){
+        var padding = [];
+        padding[0] = generateRandomNumber(currentToZero[0]);
+        currentToZero[0] -= padding[0];
+        padding[1] = generateRandomNumber(currentToZero[1]);
+        currentToZero[1] -= padding[1];
+        if (padding[0] < 2) {
+            padding[0] = 0;
+        }
+        if (padding[1] < 2) {
+            padding[1] = 0;
+        }
+        
+        rectSpec = new Rectangle();
+        rectSpec.init('rectangle-'+rectCollection.length, dimensions[i][0], dimensions[i][1], currentToEdges[0] + padding[0], currentToEdges[1] + padding[1], parent);
+        buildHTMLElement(parent.id, rectSpec);
+        rectSpec.camouflage();
+        rectCollection.push(rectSpec);
+        currentToEdges[0] += dimensions[i][0] + padding[0];
+        currentToEdges[1] += dimensions[i][1] + padding[1];
+    }
+}
 
 function myApp(){
-    initApplication();
-    // var container1 = {positionX: containerWidth, positionY: containerWidth};
-    // generatePositionsDimensions(container1, maxRectDim, minRectDim, 2);
+    initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim);
 }
 
 
 </script>
 <!-- If using a framework, please insert <script src> here -->
-<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+
 </head>
 <body onload="myApp()"><!-- 
 
