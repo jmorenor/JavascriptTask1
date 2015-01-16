@@ -5,11 +5,11 @@
 <script type="text/javascript">
 
 
-var	nRectangles = 2,
-    containerWidth = 480,
-    containerHeight = 480,
-    minRectDim = 240,
-    maxRectDim = 240;
+var	nRectangles = 3,
+    containerWidth = 600,
+    containerHeight = 600,
+    minRectDim = 50,
+    maxRectDim = 100;
     
 /*
 Specifications:
@@ -186,31 +186,6 @@ function knowingMySiblings(rectCollection){
     }
 }
 
-function initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim){
-    var body = document.body,
-        container = new Rectangle(),
-        rectCollection = [];
-    body.id = 'body';
-    container = new Rectangle();
-    container.init('container', containerWidth, containerHeight, 0, 0);
-    buildHTMLElement(body.id,container);
-    for (var i = 0; i < nRectangles; i++) {
-        var rectSpec;
-        try {
-            rectSpec = buildRectangle(rectCollection, container, maxRectDim, minRectDim);
-            rectSpec.camouflage();
-            rectCollection.push(rectSpec);
-        } catch(RangeError) {
-            while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
-            buildHTMLElement(body.id,container);
-            rectCollection = [];
-            weDontFit(rectCollection, container, maxRectDim, minRectDim, nRectangles);
-            break;
-        }
-    }
-    knowingMySiblings(rectCollection);
-}
-
 function weDontFit(rectCollection, parent, maxRectDim, minRectDim, nRectangles){
     var currentToZero = [parent.width, parent.height],
         currentToEdges = [0,0],
@@ -246,6 +221,31 @@ function weDontFit(rectCollection, parent, maxRectDim, minRectDim, nRectangles){
         currentToEdges[0] += dimensions[i][0] + padding[0];
         currentToEdges[1] += dimensions[i][1] + padding[1];
     }
+}
+
+function initApplication(nRectangles, containerWidth, containerHeight, minRectDim, maxRectDim){
+    var body = document.body,
+        container = new Rectangle(),
+        rectCollection = [];
+    body.id = 'body';
+    container = new Rectangle();
+    container.init('container', containerWidth, containerHeight, 0, 0);
+    buildHTMLElement(body.id,container);
+    for (var i = 0; i < nRectangles; i++) {
+        var rectSpec;
+        try {
+            rectSpec = buildRectangle(rectCollection, container, maxRectDim, minRectDim);
+            rectSpec.camouflage();
+            rectCollection.push(rectSpec);
+        } catch(RangeError) {
+            while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+            buildHTMLElement(body.id,container);
+            rectCollection = [];
+            weDontFit(rectCollection, container, maxRectDim, minRectDim, nRectangles);
+            break;
+        }
+    }
+    knowingMySiblings(rectCollection);
 }
 
 function myApp(){
